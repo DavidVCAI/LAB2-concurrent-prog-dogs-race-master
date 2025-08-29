@@ -3,7 +3,6 @@ package arsw.threads;
 public class RegistroLlegada {
 
 	private int ultimaPosicionAlcanzada = 1;
-
 	private String ganador = null;
 
 	public synchronized String getGanador() {
@@ -21,5 +20,4 @@ public class RegistroLlegada {
 	public synchronized void setUltimaPosicionAlcanzada(int ultimaPosicionAlcanzada) {
 		this.ultimaPosicionAlcanzada = ultimaPosicionAlcanzada;
 	}
-
 }

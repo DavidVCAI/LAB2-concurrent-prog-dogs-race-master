@@ -8,13 +8,14 @@ import javax.swing.JButton;
  * Un carril del canodromo
  * 
  * @author rlopez
- * 
  */
 public class Carril {
+
 	private Color on = Color.CYAN;
 	private Color off = Color.LIGHT_GRAY;
 	private Color stop = Color.red;
 	private Color start = Color.GREEN;
+
 	/**
 	 * Pasos del carril
 	 */
@@ -30,10 +31,8 @@ public class Carril {
 	/**
 	 * Construye un carril
 	 * 
-	 * @param nPasos
-	 *            Numero de pasos del carril
-	 * @param name
-	 *            Nombre del carril
+	 * @param nPasos Numero de pasos del carril
+	 * @param name Nombre del carril
 	 */
 	public Carril(int nPasos, String name) {
 		paso = new JButton[nPasos];
@@ -49,7 +48,7 @@ public class Carril {
 	}
 
 	/**
-	 * Tama��o del carril en numero de pasos
+	 * Tamaño del carril en numero de pasos
 	 * 
 	 * @return
 	 */
@@ -73,7 +72,6 @@ public class Carril {
 
 	/**
 	 * Retorna la bandera de llegada del carril
-	 * 
 	 * @return
 	 */
 	public JButton getLlegada() {
@@ -82,7 +80,6 @@ public class Carril {
 
 	/**
 	 * Indica que el paso i ha sido utilizado
-	 * 
 	 * @param i
 	 */
 	public void setPasoOn(int i) {
@@ -91,7 +88,6 @@ public class Carril {
 
 	/**
 	 * Indica que el paso i no ha sido utilizado
-	 * 
 	 * @param i
 	 */
 	public void setPasoOff(int i) {

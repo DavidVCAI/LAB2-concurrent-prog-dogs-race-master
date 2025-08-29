@@ -267,12 +267,284 @@ public void checkPausePoint() throws InterruptedException {
 - **Performance Analysis**: Measuring and comparing single vs multi-threaded execution
 - **Resource Management**: Efficient utilization of system resources through threading
 
-### 🔮 **Future Enhancements**
+---
 
-- 🎯 **Dynamic Thread Scaling**: Automatic thread count adjustment based on system resources
-- 📊 **Advanced Metrics**: Real-time performance monitoring and reporting
-- 🔄 **Load Balancing**: Dynamic work redistribution among threads
-- 🛡️ **Exception Handling**: Enhanced error recovery and thread fault tolerance
+## 🏁 **Part II: Greyhound Race Simulator**
+
+### 📋 **Problem Statement**
+
+This section focuses on working with a **greyhound race simulator** that demonstrates **race conditions** and **thread synchronization** challenges in concurrent programming. The simulator features multiple greyhound threads competing in a visual race environment.
+
+<img src="assets/images/greyhound_simulator.png" alt="Greyhound Simulator" width="60%">
+
+### 🏗️ **System Architecture**
+
+The application follows a **multi-threaded architecture** where all greyhounds have the same programmatic speed, making the winner dependent on **CPU scheduling** and processor cycle allocation.
+
+<img src="assets/images/greyhound_class_diagram.png" alt="Greyhound Class Diagram" width="80%">
+
+#### 🔧 **Key Components:**
+
+##### **Galgo (Greyhound Thread)**
+- **Extends**: `Thread` class
+- **Function**: Represents individual racing greyhounds
+- **Behavior**: Advances through track positions with visual updates
+
+##### **RegistroLlegada (Arrival Registry)**
+- **Purpose**: Shared object managing arrival positions
+- **Initial Value**: `ultimaPosicionAlcanzada = 1`
+- **Race Condition**: Multiple threads accessing position counter simultaneously
+
+##### **Canodromo (Race Track)**
+- **Type**: *Swing* GUI framework
+- **Function**: Visual representation of the race
+- **Features**: Real-time track updates and control buttons
+
+**Default Configuration:**
+- 🏁 **17 greyhounds** competing simultaneously
+- 📏 **100-meter track** length
+- 🎯 **Winner**: First greyhound to reach position `1`
+
+---
+
+### 🐛 **Initial Problem Analysis**
+
+#### **Problem Identification**
+
+The original application exhibits a critical **synchronization flaw**: results are displayed **before** the race completion, leading to:
+
+- ❌ **Premature result display**
+- ❌ **Inconsistent winner declarations**
+- ❌ **Race condition artifacts**
+
+<img src="assets/images/initial_greyhounds_execution.png" alt="Initial Greyhounds Execution" width="70%">
+
+---
+
+### ✅ **Point 1: Result Display Synchronization**
+
+#### 🎯 **Objective**
+Ensure results are displayed **only after** all greyhound threads have finished execution.
+
+#### 🔧 **Implementation Strategy**
+- **Location**: `MainCanodromo.java` line 38
+- **Solution**: Implement `thread.join()` for proper thread coordination
+- **Pattern**: Main thread waits for all worker threads completion
+
+#### 📊 **Results**
+```java
+// Thread synchronization implementation
+for (int i = 0; i < can.getNumCarriles(); i++) {
+    try {
+        galgos[i].join(); // Wait for each thread completion
+    } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+    }
+}
+// Display results only after all threads finish
+can.winnerDialog(reg.getGanador(), reg.getUltimaPosicionAlcanzada() - 1);
+```
+
+---
+
+### 🔍 **Point 2: Race Condition Identification**
+
+#### 🧪 **Testing Methodology**
+Multiple execution runs revealed **ranking inconsistencies** in console output:
+
+**Inconsistent Results Examples:**
+- Multiple greyhounds claiming **position 1**
+- **Duplicate position assignments**
+- **Missing position numbers** in sequence
+
+#### 🎯 **Critical Regions Identified**
+
+##### **RegistroLlegada Access**
+```java
+// CRITICAL REGION - Unsynchronized access
+int ubicacion = regl.getUltimaPosicionAlcanzada();
+regl.setUltimaPosicionAlcanzada(ubicacion + 1);
+```
+
+**Race Condition Scenario:**
+1. Thread A reads position value: `1`
+2. Thread B reads same position value: `1`
+3. Thread A increments and sets: `2`
+4. Thread B increments and sets: `2`
+5. **Result**: Both threads claim position `1`, position `2` is skipped
+
+---
+
+### 🔒 **Point 3: Synchronization Implementation**
+
+#### 🛡️ **Solution Strategy**
+Implement **synchronized blocks** to ensure **atomic operations** in critical regions.
+
+#### 📝 **Implementation Details**
+
+**Before (Race Condition):**
+```java
+// Unsynchronized - Multiple threads can interfere
+int ubicacion = regl.getUltimaPosicionAlcanzada();
+regl.setUltimaPosicionAlcanzada(ubicacion + 1);
+```
+
+**After (Thread-Safe):**
+```java
+// Synchronized block ensures atomic operation
+synchronized (regl) {
+    int ubicacion = regl.getUltimaPosicionAlcanzada();
+    regl.setUltimaPosicionAlcanzada(ubicacion + 1);
+    System.out.println("El galgo " + this.getName() + " llego en la posicion " + ubicacion);
+    if (ubicacion == 1) {
+        regl.setGanador(this.getName());
+    }
+}
+```
+
+#### ✅ **Verification Results**
+<img src="assets/images/current_greyhounds_execution.png" alt="Current Greyhounds Execution" width="70%">
+
+**Improvements Achieved:**
+- ✅ **Consistent position assignment**
+- ✅ **No duplicate winners**
+- ✅ **Sequential position numbering**
+- ✅ **Thread-safe operations**
+
+---
+
+### ⏸️ **Point 4: Pause/Continue Functionality**
+
+#### 🎮 **Control Implementation**
+
+**User Interface Controls:**
+- 🟢 **Start**: Begin race execution
+- 🔴 **Stop**: Pause all greyhound threads
+- ▶️ **Continue**: Resume paused threads
+
+#### 🔧 **Synchronization Mechanism**
+
+**Static Control Variables:**
+```java
+private static final Object PAUSE_LOCK = new Object();
+private static volatile boolean paused = false;
+```
+
+**Pause Implementation:**
+```java
+public static void pauseRace() {
+    paused = true;
+}
+```
+
+**Resume Implementation:**
+```java
+public static void continueRace() {
+    synchronized (PAUSE_LOCK) {
+        paused = false;
+        PAUSE_LOCK.notifyAll(); // Wake all waiting threads
+    }
+}
+```
+
+**Thread Check Point:**
+```java
+synchronized (PAUSE_LOCK) {
+    while (paused) {
+        PAUSE_LOCK.wait(); // Thread sleeps until notified
+    }
+}
+```
+
+### 🎯 **Design Principles**
+
+##### **Minimal Critical Region Synchronization**
+- ✅ **Only synchronize necessary code blocks**
+- ❌ **Avoid synchronizing entire methods**
+- 🎯 **Reduce blocking overhead**
+
+##### **Common Monitor Pattern**
+- ✅ **Single shared monitor object**
+- ✅ **Single `notifyAll()` call awakens all threads**
+- 🎯 **Efficient thread coordination**
+
+---
+
+### 📊 **Performance Analysis**
+
+#### 🔍 **Synchronization Overhead**
+
+| **Aspect** | **Before Synchronization** | **After Synchronization** |
+|:---------:|:---------------------------:|:--------------------------:|
+| **Consistency** | ❌ Race conditions present | ✅ Thread-safe operations |
+| **Performance** | ⚡ No locking overhead | 📊 Minimal locking overhead |
+| **Correctness** | ❌ Inconsistent results | ✅ Reliable results |
+| **Controllability** | ❌ No pause/resume | ✅ Full race control |
+
+#### 🎯 **Key Optimizations**
+
+**Efficient Synchronization Strategy:**
+- 🔒 **Minimal critical sections**: Only essential code synchronized
+- 📡 **Single monitor approach**: Reduces complexity and overhead
+- ⚡ **Volatile variables**: Efficient state sharing without full synchronization
+
+---
+
+### 🏆 **Evaluation Criteria Achievement**
+
+#### 1️⃣ **Functionality Requirements**
+
+##### **1.1 Consistent Pause/Resume Operation**
+- ✅ **Stop button**: All greyhound threads pause reliably
+- ✅ **Continue button**: All threads resume simultaneously
+- ✅ **State persistence**: Race progress maintained during pauses
+
+##### **1.2 Arrival Order Consistency**
+- ✅ **No duplicate positions**: Each position assigned once
+- ✅ **Sequential numbering**: Positions 1, 2, 3... assigned correctly
+- ✅ **Winner determination**: Clear and consistent winner identification
+
+#### 2️⃣ **Design Quality Requirements**
+
+##### **2.1 Critical Region Optimization**
+- ✅ **Minimal synchronization scope**: Only `RegistroLlegada` access synchronized
+- ✅ **Method-level avoidance**: No unnecessary method-wide synchronization
+- ✅ **Performance preservation**: Minimal impact on execution speed
+
+##### **2.2 Efficient Thread Coordination**
+- ✅ **Common monitor pattern**: Single `PAUSE_LOCK` object
+- ✅ **Single notification**: One `notifyAll()` awakens all threads
+- ✅ **Resource efficiency**: Optimal thread management approach
+
+---
+
+### 🔬 **Technical Implementation Insights**
+
+#### 🧵 **Thread Lifecycle Management**
+
+**Thread States During Execution:**
+1. **RUNNABLE**: Active race participation
+2. **WAITING**: Paused state via `wait()`
+3. **TERMINATED**: Race completion
+
+#### 🔄 **Synchronization Patterns Applied**
+
+##### **Monitor Pattern**
+- **Purpose**: Thread coordination for pause/resume
+- **Implementation**: `synchronized` blocks with `wait()`/`notifyAll()`
+- **Benefit**: Efficient thread suspension and awakening
+
+##### **Critical Section Protection**
+- **Purpose**: Protect shared resource access
+- **Implementation**: `synchronized` block around `RegistroLlegada`
+- **Benefit**: Prevents race conditions in position assignment
+
+#### 📈 **Scalability Considerations**
+
+**Current Implementation Supports:**
+- ✅ **Variable thread count**: Configurable number of greyhounds
+- ✅ **Dynamic track length**: Adjustable race distance
+- ✅ **Responsive controls**: Real-time pause/resume functionality
 
 ---
 
