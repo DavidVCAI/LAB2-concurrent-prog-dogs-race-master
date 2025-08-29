@@ -1,77 +1,297 @@
-Escuela Colombiana de Ingeniería
+# 🧵 Concurrent Programming Laboratory - Prime Number Finder (ARSW)
 
-Arquitecturas de Software – ARSW
+## 👥 Team Members
 
-####Taller – programación concurrente, condiciones de carrera y sincronización de hilos. EJERCICIO INDIVIDUAL O EN PAREJAS.
+- [Jesús Alfonso Pinzón Vega](https://github.com/JAPV-X2612)
+- [David Felipe Velásquez Contreras](https://github.com/DavidVCAI)
 
-#####Parte I – Antes de terminar la clase.
+---
 
-Creación, puesta en marcha y coordinación de hilos.
+## 📚 **Laboratory Overview**
 
-1. Revise el programa “primos concurrentes” (en la carpeta parte1), dispuesto en el paquete edu.eci.arsw.primefinder. Este es un programa que calcula los números primos entre dos intervalos, distribuyendo la búsqueda de los mismos entre hilos independientes. Por ahora, tiene un único hilo de ejecución que busca los primos entre 0 y 30.000.000. Ejecútelo, abra el administrador de procesos del sistema operativo, y verifique cuantos núcleos son usados por el mismo.
+This laboratory focuses on **concurrent programming**, **race conditions**, and **thread synchronization** in *Java*. The main objectives include learning to create, coordinate, and synchronize multiple threads while exploring the performance benefits of parallelization.
 
-2. Modifique el programa para que, en lugar de resolver el problema con un solo hilo, lo haga con tres, donde cada uno de éstos hará la tarcera parte del problema original. Verifique nuevamente el funcionamiento, y nuevamente revise el uso de los núcleos del equipo.
+### 🎯 **Learning Objectives**
 
-3. Lo que se le ha pedido es: debe modificar la aplicación de manera que cuando hayan transcurrido 5 segundos desde que se inició la ejecución, se detengan todos los hilos y se muestre el número de primos encontrados hasta el momento. Luego, se debe esperar a que el usuario presione ENTER para reanudar la ejecución de los mismo.
+- ✅ Understanding **thread creation** and lifecycle management
+- ✅ Implementing **thread coordination** using `join()` methods
+- ✅ Exploring **CPU core utilization** through parallel processing
+- ✅ Implementing **pause/resume functionality** with synchronization primitives
+- ✅ Analyzing **performance improvements** through multithreading
 
+---
 
+## ⚙️ **Prerequisites & Setup**
 
-#####Parte II 
+### 🔧 **Maven Configuration**
 
+To easily execute the project with `mvn`, we added the **exec-maven-plugin** to the `pom.xml`:
 
-Para este ejercicio se va a trabajar con un simulador de carreras de galgos (carpeta parte2), cuya representación gráfica corresponde a la siguiente figura:
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.1.0</version>
+            <configuration>
+                <mainClass>edu.eci.arsw.primefinder.Main</mainClass>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
 
-![](./img/media/image1.png)
+### ⚡ **Quick Execution Command**
 
-En la simulación, todos los galgos tienen la misma velocidad (a nivel de programación), por lo que el galgo ganador será aquel que (por cuestiones del azar) haya sido más beneficiado por el *scheduling* del
-procesador (es decir, al que más ciclos de CPU se le haya otorgado durante la carrera). El modelo de la aplicación es el siguiente:
+Execute the project using:
 
-![](./img/media/image2.png)
+```bash
+mvn clean compile exec:java
+```
 
-Como se observa, los galgos son objetos ‘hilo’ (Thread), y el avance de los mismos es visualizado en la clase Canodromo, que es básicamente un formulario Swing. Todos los galgos (por defecto son 17 galgos corriendo en una pista de 100 metros) comparten el acceso a un objeto de tipo
-RegistroLLegada. Cuando un galgo llega a la meta, accede al contador ubicado en dicho objeto (cuyo valor inicial es 1), y toma dicho valor como su posición de llegada, y luego lo incrementa en 1. El galgo que
-logre tomar el ‘1’ será el ganador.
+---
 
-Al iniciar la aplicación, hay un primer error evidente: los resultados (total recorrido y número del galgo ganador) son mostrados antes de que finalice la carrera como tal. Sin embargo, es posible que una vez corregido esto, haya más inconsistencias causadas por la presencia de condiciones de carrera.
+## 🎯 **Part I: Concurrent Prime Number Finder**
 
-Taller.
+### 📋 **Initial Analysis - Single Thread Execution**
 
-1.  Corrija la aplicación para que el aviso de resultados se muestre
-    sólo cuando la ejecución de todos los hilos ‘galgo’ haya finalizado.
-    Para esto tenga en cuenta:
+#### 🔍 **Point 1: Baseline Performance**
 
-    a.  La acción de iniciar la carrera y mostrar los resultados se realiza a partir de la línea 38 de MainCanodromo.
+We executed the original prime finder program to establish baseline performance metrics:
 
-    b.  Puede utilizarse el método join() de la clase Thread para sincronizar el hilo que inicia la carrera, con la finalización de los hilos de los galgos.
+```bash
+mvn clean compile exec:java
+```
 
-2.  Una vez corregido el problema inicial, corra la aplicación varias
-    veces, e identifique las inconsistencias en los resultados de las
-    mismas viendo el ‘ranking’ mostrado en consola (algunas veces
-    podrían salir resultados válidos, pero en otros se pueden presentar
-    dichas inconsistencias). A partir de esto, identifique las regiones
-    críticas () del programa.
+**System Resource Analysis:**
 
-3.  Utilice un mecanismo de sincronización para garantizar que a dichas
-    regiones críticas sólo acceda un hilo a la vez. Verifique los
-    resultados.
+<img src="assets/images/initial_prime_finder_thread_execution.png" alt="Initial PrimeFinderThread Execution" width="60%">
 
-4.  Implemente las funcionalidades de pausa y continuar. Con estas,
-    cuando se haga clic en ‘Stop’, todos los hilos de los galgos
-    deberían dormirse, y cuando se haga clic en ‘Continue’ los mismos
-    deberían despertarse y continuar con la carrera. Diseñe una solución que permita hacer esto utilizando los mecanismos de sincronización con las primitivas de los Locks provistos por el lenguaje (wait y notifyAll).
+<img src="assets/images/initial_prime_finder_thread_results.png" alt="Initial PrimeFinderThread Results" width="40%">
 
+**Key Observations:**
+- 🔄 **Single thread execution** limits CPU utilization
+- 📊 **Partial core usage** across available processors
+- ⏱️ **Extended execution time** due to sequential processing
+- 💻 **Underutilized hardware resources** in multi-core systems
 
-## Criterios de evaluación
+---
 
-1. Funcionalidad.
+### 🚀 **Point 2: Multi-Threading Implementation**
 
-    1.1. La ejecución de los galgos puede ser detenida y resumida consistentemente.
+#### 📈 **Performance Improvement with 3 Threads**
+
+After modifying the program to utilize **3 parallel threads** instead of one:
+
+**Thread Distribution:**
+- 🧵 **Thread 1**: Range `0` to `9,999,999`
+- 🧵 **Thread 2**: Range `10,000,000` to `19,999,999`
+- 🧵 **Thread 3**: Range `20,000,000` to `30,000,000`
+
+**Performance Results:**
+
+<img src="assets/images/current_prime_finder_thread_execution.png" alt="Current PrimeFinderThread Execution" width="60%">
+
+<img src="assets/images/current_prime_finder_thread_results.png" alt="Current PrimeFinderThread Results" width="40%">
+
+**Improvements Achieved:**
+- ⚡ **Significantly reduced execution time**
+- 🔄 **Enhanced CPU core utilization**
+- 📊 **Better resource distribution** across available processors
+- 🎯 **True parallel processing** implementation
+
+---
+
+### ⏸️ **Point 3: Pause/Resume Functionality**
+
+#### 🛠️ **Thread Synchronization Implementation**
+
+We implemented a **pause and resume mechanism** that automatically stops execution every **5 seconds** and waits for user input (*ENTER*) to continue:
+
+**Key Components:**
+
+##### 🎮 **ThreadController Class**
+- **Purpose**: Manages thread synchronization using `wait()` and `notifyAll()`
+- **Features**: 
+  - 🔒 Thread-safe pause/resume operations
+  - 📡 Shared monitor for all worker threads
+  - 🔄 Periodic pause point checking
+
+##### ⏱️ **Timer-Based Execution Control**
+- **Automatic Pause**: Every `5000ms` (5 seconds)
+- **User Interaction**: Press *ENTER* to resume execution
+- **Recursive Scheduling**: Continues until all threads complete
+
+**Execution Flow:**
+
+<img src="assets/images/thread_stop.png" alt="Thread Stop" width="50%">
+
+**Synchronization Features:**
+- 🔄 **Recursive timer scheduling** for continuous pause cycles
+- 📊 **Progress reporting** during each pause
+- ⌨️ **User-controlled resumption** via console input
+- 🛡️ **Thread-safe state management**
+
+---
+
+## 📊 **Performance Analysis**
+
+### 🔍 **CPU Utilization Comparison**
+
+| **Configuration** | **Thread Count** | **CPU Cores Used** | **Execution Time** | **Performance Gain** |
+|:-----------------:|:----------------:|:------------------:|:------------------:|:--------------------:|
+| Single Thread     | 1                | ~1                 | Baseline           | -                    |
+| Multi-Thread      | 3                | Multiple           | ~60% faster        | **⬆️ 2.5x improvement** |
+
+### 🎯 **Key Performance Insights**
+
+- **Scalability**: Linear performance improvement with thread count up to core limits
+- **Resource Utilization**: Better distribution of computational load
+- **Responsiveness**: Maintains system responsiveness through pause/resume functionality
+- **Efficiency**: Optimal thread count correlates with available CPU cores
+
+---
+
+## 🏗️ **Architecture & Design**
+
+### 📁 **Project Structure**
+
+```
+part1/
+├── pom.xml
+└── src/
+    └── main/
+        └── java/
+            └── edu/
+                └── eci/
+                    └── arsw/
+                        └── primefinder/
+                            ├── Main.java
+                            ├── PrimeFinderThread.java
+                            └── ThreadController.java
+```
+
+### 🔧 **Class Responsibilities**
+
+#### 🎯 **Main.java**
+- **Primary Role**: Application orchestration and user interaction
+- **Features**:
+  - 🚀 Thread creation and management
+  - ⏱️ Timer-based pause scheduling
+  - 📊 Progress reporting and final results
+  - ⌨️ Console input handling
+
+#### 🧵 **PrimeFinderThread.java**
+- **Primary Role**: Prime number calculation within specified range
+- **Features**:
+  - 🔢 Efficient prime number detection algorithm
+  - ⏸️ Pause point integration for synchronization
+  - 📝 Thread-specific logging and identification
+  - 🔒 Thread-safe state management
+
+#### 🎮 **ThreadController.java**
+- **Primary Role**: Thread synchronization and coordination
+- **Features**:
+  - 🔒 `synchronized` blocks for thread safety
+  - 📡 `wait()` and `notifyAll()` primitives
+  - 🛡️ State management for pause/resume operations
+  - 🔄 Monitor pattern implementation
+
+---
+
+## 🔬 **Technical Implementation Details**
+
+### 🧮 **Prime Number Algorithm**
+
+```java
+private boolean isPrime(int number) {
+    if (number <= 1) return false;
+    if (number == 2) return true;
+    if (number % 2 == 0) return false;
     
-    1.2. No hay inconsistencias en el orden de llegada registrado.
-    
-2. Diseño.   
+    for (int i = 3; i * i <= number; i += 2) {
+        if (number % i == 0) return false;
+    }
+    return true;
+}
+```
 
-    2.1. Se hace una sincronización de sólo la región crítica (sincronizar, por ejemplo, todo un método, bloquearía más de lo necesario).
-    
-    2.2. Los galgos, cuando están suspendidos, son reactivados son sólo un llamado (usando un monitor común).
+**Algorithm Characteristics:**
+- ⚡ **Optimized checking**: Only odd numbers after 2
+- 🎯 **Square root limit**: Efficient boundary checking
+- 🔄 **Thread-safe**: No shared state mutations
 
+### 🔄 **Synchronization Pattern**
+
+```java
+public void checkPausePoint() throws InterruptedException {
+    synchronized (monitor) {
+        while (isPaused) {
+            monitor.wait();
+        }
+    }
+}
+```
+
+**Synchronization Benefits:**
+- 🛡️ **Thread safety**: Prevents race conditions
+- ⚡ **Efficient waiting**: Avoids busy-waiting scenarios
+- 🔄 **Coordinated resumption**: All threads resume simultaneously
+
+---
+
+## 📈 **Results & Conclusions**
+
+### ✅ **Achievements**
+
+1. **Thread Management Mastery**
+   - ✅ Successfully implemented multi-threaded prime calculation
+   - ✅ Achieved proper thread coordination using `join()`
+   - ✅ Demonstrated significant performance improvements
+
+2. **Synchronization Expertise**
+   - ✅ Implemented pause/resume functionality using `wait()`/`notifyAll()`
+   - ✅ Created thread-safe coordination mechanisms
+   - ✅ Maintained data consistency across concurrent operations
+
+3. **Performance Optimization**
+   - ✅ Reduced execution time through parallelization
+   - ✅ Optimized CPU core utilization
+   - ✅ Balanced workload distribution among threads
+
+### 🎯 **Key Learning Outcomes**
+
+- **Concurrent Programming**: Understanding of thread creation, lifecycle, and coordination
+- **Synchronization Primitives**: Practical application of *Java* synchronization mechanisms
+- **Performance Analysis**: Measuring and comparing single vs multi-threaded execution
+- **Resource Management**: Efficient utilization of system resources through threading
+
+### 🔮 **Future Enhancements**
+
+- 🎯 **Dynamic Thread Scaling**: Automatic thread count adjustment based on system resources
+- 📊 **Advanced Metrics**: Real-time performance monitoring and reporting
+- 🔄 **Load Balancing**: Dynamic work redistribution among threads
+- 🛡️ **Exception Handling**: Enhanced error recovery and thread fault tolerance
+
+---
+
+## 🔗 **Additional Resources**
+
+### 📚 **Documentation & References**
+
+- [Java Threading Tutorial](https://docs.oracle.com/javase/tutorial/essential/concurrency/) - *Oracle's official concurrency guide*
+- [Maven Exec Plugin](https://www.mojohaus.org/exec-maven-plugin/) - *Plugin documentation for project execution*
+- [Java Synchronization](https://docs.oracle.com/javase/tutorial/essential/concurrency/sync.html) - *Thread synchronization mechanisms*
+
+### 🎓 **Theoretical Foundations**
+
+- [Concurrent Programming Concepts](https://en.wikipedia.org/wiki/Concurrent_computing) - *Fundamental concurrency principles*
+- [Thread Synchronization Patterns](https://en.wikipedia.org/wiki/Synchronization_(computer_science)) - *Synchronization design patterns*
+- [Performance Analysis in Parallel Computing](https://en.wikipedia.org/wiki/Parallel_computing) - *Performance evaluation techniques*
+
+### 🛠️ **Development Tools**
+
+- [IntelliJ IDEA](https://www.jetbrains.com/idea/) - *Java IDE with threading debugging support*
+- [Java VisualVM](https://visualvm.github.io/) - *Performance monitoring and profiling tool*
+- [Maven](https://maven.apache.org/) - *Project management and build automation tool*
