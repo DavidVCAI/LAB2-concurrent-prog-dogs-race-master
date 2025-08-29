@@ -52,7 +52,7 @@ Listo entonces lo que hacemos es hacer que con un join() esperemos la ejecucion 
 
 En primer lugar vemos que una region critica a ser atacada es el posicionamiento, se puede ver como varios hilos tratan al mismo tiempo de acceder al RegistroLlegada, lo que hace que hayan posiciones duplicadas. Esto tambien implica que el ganador se vaya reemplazando a medida que van llegando resultados iguales. Osea que los metodos get y set necesitan tener esto en cuenta.
 
-Aplique synchronized a los metodos y se ve una mejora pero aun asi no funciona.
+Aplique synchronized a los metodos y se ve una mejora pero aun asi no funciona. Dada la ejecucion se ven otros inconvenientes.
 
 Vemos que otra region critica es en el Galgo como tal, debemos sincronizar tambien la parte que imprime su posicion de llegada. Haciendo esto vemos que ya funciona bien:
 
