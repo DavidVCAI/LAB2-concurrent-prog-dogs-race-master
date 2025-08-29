@@ -18,9 +18,8 @@ import javax.swing.border.EmptyBorder;
 
 /**
  * Interfaz de usuario y modelo para un Canodromo
- * 
+ *
  * @author rlopez
- * 
  */
 public class Canodromo extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -36,10 +35,8 @@ public class Canodromo extends JFrame {
 	/**
 	 * Constructor
 	 * 
-	 * @param nCarriles
-	 *            Numero de carriles
-	 * @param longPista
-	 *            Longitud de la pista
+	 * @param nCarriles Numero de carriles
+	 * @param longPista Longitud de la pista
 	 */
 	public Canodromo(int nCarriles, int longPista) {
 		carril = new Carril[nCarriles];
@@ -117,8 +114,7 @@ public class Canodromo extends JFrame {
 	/**
 	 * Retorna un carril
 	 * 
-	 * @param i
-	 *            Numero del carril
+	 * @param i Numero del carril
 	 * @return
 	 */
 	public Carril getCarril(int i) {
@@ -131,7 +127,6 @@ public class Canodromo extends JFrame {
 
 	/**
 	 * Asocia una accion con el boton de start
-	 * 
 	 * @param action
 	 */
 	public void setStartAction(ActionListener action) {
@@ -140,7 +135,6 @@ public class Canodromo extends JFrame {
 
 	/**
 	 * Asocia una accion con el boton de stop
-	 * 
 	 * @param action
 	 */
 	public void setStopAction(ActionListener action) {
@@ -149,7 +143,6 @@ public class Canodromo extends JFrame {
 
 	/**
 	 * Asocia una accion con el boton de continuar
-	 * 
 	 * @param action
 	 */
 	public void setContinueAction(ActionListener action){

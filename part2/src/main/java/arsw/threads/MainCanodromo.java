@@ -8,9 +8,7 @@ import javax.swing.JButton;
 public class MainCanodromo {
 
     private static Galgo[] galgos;
-
     private static Canodromo can;
-
     private static RegistroLlegada reg = new RegistroLlegada();
 
     public static void main(String[] args) {

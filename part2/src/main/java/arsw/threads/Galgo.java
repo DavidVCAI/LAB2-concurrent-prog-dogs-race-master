@@ -4,7 +4,6 @@ package arsw.threads;
  * Un galgo que puede correr en un carril
  * 
  * @author rlopez
- * 
  */
 public class Galgo extends Thread {
 
